@@ -4,6 +4,7 @@ let modalCont = document.querySelector(".modal-cont");
 let mainCont = document.querySelector(".main-cont");
 let textareaCont = document.querySelector(".textarea-cont");
 let allPriorityColors = document.querySelectorAll(".priority-color");
+let toolBoxColors = document.querySelectorAll(".color");
 
 // let lockElem = document.querySelector(".ticket-lock");
 
@@ -15,6 +16,41 @@ let removeFlag = false;
 
 let lockClass = "fa-lock"; 
 let unlockClass = "fa-lock-open";
+
+let ticketsArr = []
+
+for(let i = 0; i < toolBoxColors.length; i++){
+    toolBoxColors[i].addEventListener("click", (e) => {
+        let currentToolBoxColor = toolBoxColors[i].classList[0];
+
+        let filteredTickets = ticketsArr.filter((ticketObj, idx) => {
+            return currentToolBoxColor === ticketObj.ticketColor;
+        })
+
+        // Remove previous tickets
+        let allTicketsCont = document.querySelectorAll(".ticket-cont");
+        for(let i = 0; i < allTicketsCont.length; i++){
+            allTicketsCont[i].remove();
+        }
+        
+        // Display new filtered tickets
+        filteredTickets.forEach((ticketObj, idx) => {
+            createTicket(ticketObj.ticketColor, ticketObj.ticketTask, ticketObj.ticketID);
+        })
+    })
+    
+    toolBoxColors[i].addEventListener("dblclick", (e) => {
+        // Remove previous tickets
+        let allTicketsCont = document.querySelectorAll(".ticket-cont");
+        for(let i = 0; i < allTicketsCont.length; i++){
+            allTicketsCont[i].remove();
+        }
+
+        ticketsArr.forEach((ticketObj, idx) => {
+            createTicket(ticketObj.ticketColor, ticketObj.ticketTask, ticketObj.ticketID);
+        })
+    })
+}
 
 // Listener for modal priority coloring
 allPriorityColors.forEach((colorElem, idx) => {
@@ -49,19 +85,19 @@ removeBtn.addEventListener("click", (e) => {
 modalCont.addEventListener("keydown", (e) => {
     let key = e.key;
     if(key === "Shift"){
-        createTicket(modalPriorityColor, textareaCont.value, shortid());
-        modalCont.style.display = "none";
+        createTicket(modalPriorityColor, textareaCont.value);
         addFlag = false;
-        textareaCont.value = "";
+        setModalToDefault();
     }
 })
 
 function createTicket(ticketColor, ticketTask, ticketID) {
+    let id = ticketID || shortid();
     let ticketCont = document.createElement("div");
     ticketCont.setAttribute("class", "ticket-cont");
     ticketCont.innerHTML = `
         <div class="ticket-color ${ticketColor}"></div>
-        <div class="ticket-id">#${ticketID}</div>
+        <div class="ticket-id">#${id}</div>
         <div class="task-area">${ticketTask}</div>
         <div class="ticket-lock">
             <i class="fa-solid fa-lock"></i>
@@ -69,6 +105,9 @@ function createTicket(ticketColor, ticketTask, ticketID) {
     `;
 
     mainCont.appendChild(ticketCont);
+
+    // Create object of ticket and add to array
+    if(!ticketID) ticketsArr.push({ticketColor, ticketTask, ticketID: id});
 
     handleRemoval(ticketCont);
     handleLock(ticketCont);
@@ -112,4 +151,17 @@ function handleColor(ticket) {
         ticketColor.classList.remove(currentTicketColor);
         ticketColor.classList.add(newTicketColor);
     })
+}
+
+function setModalToDefault() {
+
+    modalCont.style.display = "none";
+    textareaCont.value = "";
+    modalPriorityColor = colors[colors.length - 1];
+
+    allPriorityColors.forEach((priorityColorElem, idx) => {
+        priorityColorElem.classList.remove("border");
+    })
+
+    allPriorityColors[allPriorityColors.length -  1].classList.add("border");
 }
