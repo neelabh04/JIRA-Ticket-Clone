@@ -107,11 +107,14 @@ function createTicket(ticketColor, ticketTask, ticketID) {
     mainCont.appendChild(ticketCont);
 
     // Create object of ticket and add to array
-    if(!ticketID) ticketsArr.push({ticketColor, ticketTask, ticketID: id});
+    if(!ticketID) {
+        ticketsArr.push({ticketColor, ticketTask, ticketID: id});
+        localStorage.setItem("jira_tickets", JSON.stringify(ticketsArr));
+    } 
 
     handleRemoval(ticketCont);
-    handleLock(ticketCont);
-    handleColor(ticketCont);
+    handleLock(ticketCont, id);
+    handleColor(ticketCont, id);
 }
 
 function handleRemoval(ticket) {
@@ -124,7 +127,8 @@ function handleLock(ticket) {
     let ticketLock = ticketLockElem.children[0];
     let ticketTaskArea = ticket.querySelector(".task-area");
     ticketLock.addEventListener("click", (e) => {
-        if(ticketLock.classList.contains(lock)) {
+        let ticketIdx = getTicketIdx(id);
+        if(ticketLock.classList.contains(lockClass)) {
             ticketLock.classList.remove(lockClass);
             ticketLock.classList.add(unlockClass);
             ticketTaskArea.setAttribute("contenteditable", "true");
@@ -133,24 +137,41 @@ function handleLock(ticket) {
             ticketLock.classList.add(lockClass);
             ticketTaskArea.setAttribute("contenteditable", "false");
         }
+
+        // Modify data in local storage (Ticket task)
     })
 }
 
-function handleColor(ticket) {
+function handleColor(ticket, id) {
     let ticketColor = ticket.querySelector(".ticket-color");
     ticketColor.addEventListener("click", (e) => {
+        // get ticket index from the tickets array 
+        let ticketIdx = getTicketIdx(id); 
+
         let currentTicketColor = ticketColor.classList[1]; 
         // Get ticket color index 
-        let currentTicketColorIndex = colors.findIndex((color) => {
+        let currentTicketColorIdx = colors.findIndex((color) => {
             return currentTicketColor === color;
         })
     
-        currentTicketColorIndex++;
-        let newTicketColorIdx = currentTicketColorIndex % colors.length;
+        currentTicketColorIdx++;
+        let newTicketColorIdx = currentTicketColorIdx % colors.length;
         let newTicketColor = colors[newTicketColorIdx];
         ticketColor.classList.remove(currentTicketColor);
         ticketColor.classList.add(newTicketColor);
+
+        // Modify data in local storage (priority color change)
+        ticketsArr[ticketIdx].ticketColor = newTicketColor;
+        localStorage.setItem("jira_tickets", JSON.stringify(ticketsArr))
     })
+}
+
+function getTicketIdx(id) {
+    let ticketIdx = ticketsArr.findIndex((ticketObj) => {
+        return ticketObj.ticketID === id;
+    })
+
+    return ticketIdx; 
 }
 
 function setModalToDefault() {
