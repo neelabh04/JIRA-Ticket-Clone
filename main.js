@@ -17,7 +17,15 @@ let removeFlag = false;
 let lockClass = "fa-lock"; 
 let unlockClass = "fa-lock-open";
 
-let ticketsArr = []
+let ticketsArr = [];
+
+if(localStorage.getItem("jira_tickets")) {
+    // Retrieve and display tickets
+    ticketsArr = JSON.parse(localStorage.getItem("jira_tickets"));
+    ticketsArr.forEach((ticketObj) => {
+        createTicket(ticketObj.ticketColor, ticketObj.ticketTask, ticketObj.ticketID);
+    })
+}
 
 for(let i = 0; i < toolBoxColors.length; i++){
     toolBoxColors[i].addEventListener("click", (e) => {
@@ -112,33 +120,55 @@ function createTicket(ticketColor, ticketTask, ticketID) {
         localStorage.setItem("jira_tickets", JSON.stringify(ticketsArr));
     } 
 
-    handleRemoval(ticketCont);
+    handleRemoval(ticketCont, id);
     handleLock(ticketCont, id);
     handleColor(ticketCont, id);
 }
 
-function handleRemoval(ticket) {
+function handleRemoval(ticket, id) {
     // removeFlag == true then remove
-    if(removeFlag) ticket.remove();
+    ticket.addEventListener("click", (e) => {
+        if(removeFlag) ticket.remove();
+
+        let index = getTicketIdx(id);
+
+        // removing from database
+        ticketsArr.splice(idx, 1);
+        let strTicketsArr = JSON.stringify(ticketsArr);
+        localStorage.setItem("jira_tickets", strTicketsArr);
+        
+        // removal from UI
+        ticket.remove();
+    })
 }
 
-function handleLock(ticket) {
+function handleLock(ticket, id) {
+
     let ticketLockElem = ticket.querySelector(".ticket-lock");
     let ticketLock = ticketLockElem.children[0];
     let ticketTaskArea = ticket.querySelector(".task-area");
+
     ticketLock.addEventListener("click", (e) => {
+
         let ticketIdx = getTicketIdx(id);
+
         if(ticketLock.classList.contains(lockClass)) {
+
             ticketLock.classList.remove(lockClass);
             ticketLock.classList.add(unlockClass);
             ticketTaskArea.setAttribute("contenteditable", "true");
+
         }else{
+
             ticketLock.classList.remove(unlockClass);
             ticketLock.classList.add(lockClass);
             ticketTaskArea.setAttribute("contenteditable", "false");
+
         }
 
         // Modify data in local storage (Ticket task)
+        ticketsArr[ticketIdx].ticketTask = ticketTaskArea.innerText;
+        localStorage.setItem("jira_tickets", JSON.stringify(ticketsArr));
     })
 }
 
